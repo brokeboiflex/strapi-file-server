@@ -8,6 +8,7 @@ const fs = require("fs");
 const path = require("path");
 
 // TODO
+// trycatchall
 // brotli /gzip
 // sprawdzanie plików po checksumach by nie zaśmiecać dysku
 
@@ -19,6 +20,22 @@ const resolveFilePath = (req) =>
   path.join(public, decodeURI(req.url.substring(7, req.url.length)));
 app.use(cors(), fileUpload());
 
+const getAllFiles = (dirPath, arrayOfFiles) => {
+  files = fs.readdirSync(dirPath);
+  arrayOfFiles = arrayOfFiles || [];
+  files.forEach(function (file) {
+    if (fs.statSync(dirPath + "/" + file).isDirectory()) {
+      arrayOfFiles = getAllFiles(dirPath + "/" + file, arrayOfFiles);
+    } else {
+      console.log(dirPath);
+      arrayOfFiles.push(
+        path.join(__dirname, dirPath, "/", file).split("public/")[1]
+      );
+    }
+  });
+
+  return arrayOfFiles;
+};
 app.post("/upload", async (req, res) => {
   if (!req.files) {
     return res.status(400).send("No files were uploaded.");
@@ -38,8 +55,9 @@ app.delete("/files/*", async (req, res) => {
 });
 
 app.get("/listall", async (req, res) => {
-  // const allFiles =
-  // res.send(allFiles);
+  const allFiles = getAllFiles(public);
+  console.log(allFiles);
+  return res.send(allFiles);
 });
 
 app.get("/files/*", async (req, res) => {
