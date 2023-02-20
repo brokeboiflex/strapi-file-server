@@ -14,6 +14,9 @@ const path = require("path");
 const app = express();
 const port = 6661; // 777 jest liczba boga  nodejs nie zasługuje
 const public = path.join(__dirname, "public");
+
+const resolveFilePath = (req) =>
+  path.join(public, decodeURI(req.url.substring(7, req.url.length)));
 app.use(cors(), fileUpload());
 
 app.post("/upload", async (req, res) => {
@@ -28,7 +31,11 @@ app.post("/upload", async (req, res) => {
     return res.status(200).send(newName);
   }
 });
-// app.delete("/files/:filename");
+app.delete("/files/*", async (req, res) => {
+  const pathToFile = resolveFilePath(req);
+  fs.unlinkSync(pathToFile);
+  return res.status(200).send("ok");
+});
 
 app.get("/listall", async (req, res) => {
   // const allFiles =
@@ -36,10 +43,9 @@ app.get("/listall", async (req, res) => {
 });
 
 app.get("/files/*", async (req, res) => {
-  console.log(req.url);
-  const pathToFile = decodeURI(req.url.substring(7, req.url.length));
+  const pathToFile = resolveFilePath(req);
   console.log(pathToFile);
-  res.sendFile(path.join(public, pathToFile));
+  res.sendFile(pathToFile);
 });
 
 app.listen(port, () => {
