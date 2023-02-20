@@ -34,7 +34,9 @@ const getAllFiles = (dirPath, arrayOfFiles) => {
   return arrayOfFiles;
 };
 
-// TODO zwróć już zuploadowany plik
+// TODO jeśli plik już jest na serwerze zwróć jego ścieżkę
+// jeśli plik jest bezpiecznie uploadowany a nie jest bezpiecznie przechowany przenieś go do bezpiecznego folderu
+// protected delete - może być wykonane jedynie z serwera gql jakoś po cors
 app.post("/upload", async (req, res) => {
   try {
     if (!req.files) {
@@ -82,15 +84,18 @@ app.post("/protected-upload", async (req, res) => {
 app.delete("/files/*", async (req, res) => {
   try {
     const pathToFile = resolveFilePath(req);
-    const fileHash = hashes.getFileHash(pathToFile);
-    fs.unlinkSync(pathToFile);
-    hashes.removeStoredHash(hashtablePath, fileHash);
-    return res.status(200).send("ok");
+    if (pathToFile.includes("protected")) {
+      return res.status(400).send("Cannot remove protected file");
+    } else {
+      const fileHash = hashes.getFileHash(pathToFile);
+      fs.unlinkSync(pathToFile);
+      hashes.removeStoredHash(hashtablePath, fileHash);
+      return res.status(200).send("ok");
+    }
   } catch (err) {
     throw new Error(err);
   }
 });
-
 app.get("/listall", async (req, res) => {
   try {
     const allFiles = getAllFiles(public);
