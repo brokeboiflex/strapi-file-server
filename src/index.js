@@ -37,14 +37,16 @@ const getAllFiles = (dirPath, arrayOfFiles) => {
 // TODO jeśli plik już jest na serwerze zwróć jego ścieżkę
 // jeśli plik jest bezpiecznie uploadowany a nie jest bezpiecznie przechowany przenieś go do bezpiecznego folderu
 // protected delete - może być wykonane jedynie z serwera gql jakoś po cors
-app.post("/upload", async (req, res) => {
+
+const upload = async (req, res, destination) => {
+  // TODO jeżeli plik istnieje ale nie jest chroniony zabezpiecz go
   try {
     if (!req.files) {
       return res.status(400).send("No files were uploaded.");
     } else {
       const fileName = await req.files.file.name;
       const tempPath = path.join(__dirname, "../temp", fileName);
-      const constPath = path.join(__dirname, "../public", fileName);
+      const constPath = path.join(__dirname, destination, fileName);
       await req.files.file.mv(tempPath);
       if (hashes.checkHash(tempPath, hashtablePath)) {
         fs.unlinkSync(tempPath);
@@ -58,28 +60,13 @@ app.post("/upload", async (req, res) => {
     console.log("Upload error");
     throw new Error(err);
   }
+};
+
+app.post("/upload", async (req, res) => {
+  upload(req, res, "../public");
 });
 app.post("/protected-upload", async (req, res) => {
-  try {
-    if (!req.files) {
-      return res.status(400).send("No files were uploaded.");
-    } else {
-      const fileName = await req.files.file.name;
-      const tempPath = path.join(__dirname, "../temp", fileName);
-      const constPath = path.join(__dirname, "../public/protected", fileName);
-      await req.files.file.mv(tempPath);
-      if (hashes.checkHash(tempPath, hashtablePath)) {
-        fs.unlinkSync(tempPath);
-        return res.status(400).send("File already exists");
-      } else {
-        fs.renameSync(tempPath, constPath);
-        return res.status(200).send(fileName);
-      }
-    }
-  } catch (err) {
-    console.log("Upload error");
-    throw new Error(err);
-  }
+  upload(req, res, "../public/protected");
 });
 app.delete("/files/*", async (req, res) => {
   try {
