@@ -29,8 +29,8 @@ function removeStoredHash(filePath, hashToRemove) {
   updateStoredHashes(filePath, filteredHashes);
 }
 
-function checkHash(filePath, storedHashesFilePath) {
-  const hash = getFileHash(filePath);
+function checkHash(filePath, storedHashesFilePath, passHash) {
+  const hash = passHash ? passHash : getFileHash(filePath);
   const storedHashes = getStoredHashes(storedHashesFilePath);
   if (storedHashes.includes(hash)) {
     return true;
