@@ -61,7 +61,6 @@ export default function initFunctions(publicFolder: string) {
         return res.status(400).send("No files were uploaded.");
       } else {
         const authHeader = req.headers.authorization;
-        console.log(authHeader);
 
         const client = createClient({
           url: process.env.DB_SERVER,
@@ -78,42 +77,47 @@ export default function initFunctions(publicFolder: string) {
         await req.files.file.mv(tempPath);
         const constPath = path.join(publicFolder, fileName);
         const hash = hashes.getFileHash(tempPath);
-
         const queryResult = await client
           .query(getFileByHash, { hash })
           .toPromise();
         let fileInfo = queryResult.data && queryResult.data.fileByHash;
-        console.log(fileInfo);
+        // console.log("queryResult");
+        // console.log(queryResult.data);
 
         if (fileInfo && fileInfo.id) {
+          console.log("File already exists");
           fs.unlinkSync(tempPath);
-          const currentPath = fileInfo.url;
-          return res.status(200).send(currentPath);
+          return res.status(200).send(fileInfo);
         } else {
+          console.log("Creating file");
           fs.renameSync(tempPath, constPath);
           const related = req.body.related;
           const stats = fs.statSync(constPath);
           const fileSizeInBytes = stats.size;
-
           const fileData = {
             name: fileName,
             hash: hash,
-            category_id: related ? "FileCategory:0" : "",
+            category: related ? "FileCategory:0" : "",
             size: fileSizeInBytes,
             extension: path.extname(constPath),
             last_modified: new Date().toISOString(),
-            url: constPath,
+            url: `/files/${fileName}`,
             related: related ? [related] : [],
             typename: "File",
           };
           const mutationResult = await client
             .mutation(createFile, { data: fileData })
             .toPromise();
-          console.log(mutationResult);
-          fileInfo = mutationResult.data && mutationResult.data.createFile;
-          console.log(fileInfo);
+          const error = mutationResult.error && mutationResult.error.message;
+          if (error) {
+            throw new Error(error);
+          }
 
-          return res.status(200).send(constPath);
+          fileInfo = mutationResult.data && mutationResult.data.createFile;
+          // console.log("fileInfo");
+          // console.log(fileInfo);
+
+          return res.status(200).send(fileInfo);
         }
       }
     } catch (err) {
