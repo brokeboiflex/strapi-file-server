@@ -1,17 +1,11 @@
 import fs from "fs";
 import path from "path";
-import {
-  createClient,
-  dedupExchange,
-  cacheExchange,
-  fetchExchange,
-} from "@urql/core";
+import { createClient } from "@urql/core";
 import hashes from "./hashes";
 
 import { createFile, getFileByHash, moveFile } from "./api";
 
 const tempFolder = path.join(__dirname, "../temp");
-const hashtablePath = path.join(__dirname, "../hashtable.txt");
 
 export default function initFunctions(publicFolder: string) {
   const resolveFilePath = (req) =>
@@ -24,7 +18,6 @@ export default function initFunctions(publicFolder: string) {
       if (fs.statSync(dirPath + "/" + file).isDirectory()) {
         fileArray = returnAllFiles(dirPath + "/" + file, fileArray);
       } else {
-        console.log(dirPath);
         fileArray.push(
           path.join(__dirname, dirPath, "/", file).split("public/")[1]
         );
@@ -45,8 +38,6 @@ export default function initFunctions(publicFolder: string) {
   const getAllFiles = async (req, res) => {
     try {
       const allFiles = returnAllFiles(publicFolder);
-      console.log(allFiles);
-
       return res.status(200).send(allFiles);
     } catch (err) {
       throw new Error(err);
@@ -129,9 +120,7 @@ export default function initFunctions(publicFolder: string) {
   const deleteFile = async (req, res) => {
     try {
       const pathToFile = resolveFilePath(req);
-      const fileHash = hashes.getFileHash(pathToFile);
       fs.unlinkSync(pathToFile);
-      hashes.removeStoredHash(hashtablePath, fileHash);
       return res.status(200).send("ok");
     } catch (err) {
       throw new Error(err);
