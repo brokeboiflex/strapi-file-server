@@ -3,6 +3,7 @@ import path from "path";
 import { createClient } from "@urql/core";
 import checkDiskSpace from "check-disk-space";
 
+import extensions from "./file-extensions";
 import hashes from "./hashes";
 import { createFile, getFileByHash, moveFile } from "./api";
 
@@ -11,6 +12,13 @@ const tempFolder = path.join(__dirname, "../temp");
 export default function initFunctions(publicFolder: string) {
   const resolveFilePath = (req) =>
     path.join(publicFolder, decodeURI(req.url.substring(7, req.url.length)));
+
+  const extensionToCategotry = (extension: string) => {
+    const category = Object.keys(extensions).find((key) =>
+      extensions[key].includes(extension)
+    );
+    return category ? category : "other";
+  };
 
   const returnAllFiles = (dirPath: string, arrayOfFiles?: string[]) => {
     const files = fs.readdirSync(dirPath);
@@ -83,18 +91,21 @@ export default function initFunctions(publicFolder: string) {
         } else {
           console.log("Creating file");
           fs.renameSync(tempPath, constPath);
-          const related = req.body.related;
+
+          const folder = req.body.folder;
           const stats = fs.statSync(constPath);
           const fileSizeInBytes = stats.size;
+          const extension = path.extname(constPath);
+          const category = extensionToCategotry(extension.substring(1));
+
           const fileData = {
             name: fileName,
             hash: hash,
-            category: related ? "FileCategory:0" : "",
+            category: category,
             size: fileSizeInBytes,
-            extension: path.extname(constPath),
             last_modified: new Date().toISOString(),
+            folder: folder,
             url: `/files/${fileName}`,
-            related: related ? [related] : [],
             typename: "File",
           };
           const mutationResult = await client

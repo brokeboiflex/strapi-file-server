@@ -6,9 +6,7 @@ export const getFileByHash = gql`
       id
       name
       hash
-      category {
-        name
-      }
+      category
       size
       last_modified
       url
@@ -23,9 +21,7 @@ export const createFile = gql`
       id
       name
       hash
-      category {
-        name
-      }
+      category
       size
       last_modified
       url

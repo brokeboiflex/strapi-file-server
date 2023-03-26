@@ -1,0 +1,18 @@
+export default [
+  "doc",
+  "docx",
+  "ebook",
+  "log",
+  "md",
+  "msg",
+  "odt",
+  "org",
+  "pages",
+  "pdf",
+  "rtf",
+  "rst",
+  "tex",
+  "txt",
+  "wpd",
+  "wps",
+];
