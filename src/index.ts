@@ -27,7 +27,7 @@ const corsOptions = {
   // },
 };
 
-const { uploadFile, deleteFile, getFile, getAllFiles } =
+const { uploadFile, deleteFile, getFile, getAllFiles, getDiskUsage } =
   initFunctions(publicFolder);
 
 // app.disable("x-powered-by");
@@ -52,6 +52,9 @@ app.get("/listall", async (req, res) => {
 });
 app.get("/files/*", async (req, res) => {
   getFile(req, res);
+});
+app.get("/diskusage", async (req, res) => {
+  getDiskUsage(req, res);
 });
 
 app.listen(port, () => {

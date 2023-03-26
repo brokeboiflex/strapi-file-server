@@ -1,8 +1,9 @@
 import fs from "fs";
 import path from "path";
 import { createClient } from "@urql/core";
-import hashes from "./hashes";
+import checkDiskSpace from "check-disk-space";
 
+import hashes from "./hashes";
 import { createFile, getFileByHash, moveFile } from "./api";
 
 const tempFolder = path.join(__dirname, "../temp");
@@ -127,5 +128,18 @@ export default function initFunctions(publicFolder: string) {
     }
   };
 
-  return { getFile, getAllFiles, uploadFile, deleteFile };
+  const getDiskUsage = async (req, res) => {
+    checkDiskSpace("/").then((diskSpace) => {
+      res.status(200).send(diskSpace);
+      console.log(diskSpace);
+      // {
+      //     diskPath: '/',
+      //     free: 12345678,
+      //     size: 98756432
+      // }
+      // Note: `free` and `size` are in bytes
+    });
+  };
+
+  return { getFile, getAllFiles, uploadFile, deleteFile, getDiskUsage };
 }
