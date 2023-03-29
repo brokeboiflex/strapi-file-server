@@ -132,6 +132,7 @@ export default function initFunctions(publicFolder: string) {
   const deleteFile = async (req, res) => {
     try {
       const pathToFile = resolveFilePath(req);
+      console.log(pathToFile);
       fs.unlinkSync(pathToFile);
       return res.status(200).send("ok");
     } catch (err) {
