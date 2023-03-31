@@ -5,6 +5,7 @@ export const getFileByHash = gql`
     fileByHash(hash: $hash) {
       id
       name
+      extension
       hash
       category
       size
@@ -21,6 +22,7 @@ export const createFile = gql`
     createFile(data: $data) {
       id
       name
+      extension
       hash
       category
       size

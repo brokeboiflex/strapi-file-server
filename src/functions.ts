@@ -80,7 +80,7 @@ export default function initFunctions(publicFolder: string) {
         await req.files.file.mv(tempPath);
         const extension = path.extname(tempPath);
         const hash = hashes.getFileHash(tempPath);
-
+        // filename is its hash + extension to avoid storing duplicate files with different names
         const constPath = path.join(publicFolder, hash + extension);
         const queryResult = await client
           .query(getFileByHash, { hash })
@@ -106,10 +106,13 @@ export default function initFunctions(publicFolder: string) {
               : extensionToCategotry(extension.substring(1));
 
           const url =
-            fileInfo && fileInfo.url ? fileInfo.url : `/files/${fileName}`;
+            fileInfo && fileInfo.url
+              ? fileInfo.url
+              : `/files/${hash + extension}`;
 
           const fileData = {
             name: fileName,
+            extension: extension,
             hash: hash,
             category: category,
             size: fileSizeInBytes,
