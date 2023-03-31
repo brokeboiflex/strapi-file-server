@@ -5,8 +5,9 @@ import checkDiskSpace from "check-disk-space";
 
 import extensions from "./file-extensions";
 import hashes from "./hashes";
-import { createFile, getFileByHash, moveFile } from "./api";
+import { createFile, getFileByHash } from "./api";
 import log from "./log";
+
 const tempFolder = path.join(__dirname, "../temp");
 
 export default function initFunctions(publicFolder: string) {
@@ -72,15 +73,20 @@ export default function initFunctions(publicFolder: string) {
           },
         });
 
-        const fileName = await req.files.file.name;
+        const fileName = decodeURI(req.files.file.name);
+        const folder = req.body.folder;
+
         const tempPath = path.join(tempFolder, fileName);
         await req.files.file.mv(tempPath);
-        const constPath = path.join(publicFolder, fileName);
+        const extension = path.extname(tempPath);
         const hash = hashes.getFileHash(tempPath);
+
+        const constPath = path.join(publicFolder, hash + extension);
         const queryResult = await client
           .query(getFileByHash, { hash })
           .toPromise();
-        let fileInfo = queryResult.data && queryResult.data.fileByHash;
+        let fileInfo =
+          (await queryResult.data) && (await queryResult.data.fileByHash);
         if (fileInfo && fileInfo.id) {
           log("File already uploaded", "blue");
           fs.unlinkSync(tempPath);
@@ -88,32 +94,43 @@ export default function initFunctions(publicFolder: string) {
           log("Saving file", "blue");
           fs.renameSync(tempPath, constPath);
         }
+        if (!fileInfo || folder !== fileInfo.folder) {
+          const fileSizeInBytes =
+            fileInfo && typeof fileInfo.size === "number"
+              ? fileInfo.size
+              : fs.statSync(constPath).size;
 
-        const folder = req.body.folder;
-        const stats = fs.statSync(constPath);
-        const fileSizeInBytes = stats.size;
-        const extension = path.extname(constPath);
-        const category = extensionToCategotry(extension.substring(1));
+          const category =
+            fileInfo && fileInfo.category
+              ? fileInfo.category
+              : extensionToCategotry(extension.substring(1));
 
-        const fileData = {
-          name: fileName,
-          hash: hash,
-          category: category,
-          size: fileSizeInBytes,
-          last_modified: new Date().toISOString(),
-          folder: folder,
-          url: `/files/${fileName}`,
-          typename: "File",
-        };
-        const mutationResult = await client
-          .mutation(createFile, { data: fileData })
-          .toPromise();
-        const error = mutationResult.error && mutationResult.error.message;
-        if (error) {
-          throw new Error(error);
+          const url =
+            fileInfo && fileInfo.url ? fileInfo.url : `/files/${fileName}`;
+
+          const fileData = {
+            name: fileName,
+            hash: hash,
+            category: category,
+            size: fileSizeInBytes,
+            last_modified: new Date().toISOString(),
+            folder: folder,
+            url: url,
+            typename: "File",
+          };
+          const mutationResult = await client
+            .mutation(createFile, { data: fileData })
+            .toPromise();
+          const error = mutationResult.error && mutationResult.error.message;
+          if (error) {
+            throw new Error(error);
+          }
+          fileInfo = mutationResult.data && mutationResult.data.createFile;
+          return res.status(201).send(fileInfo);
+        } else {
+          log("File already exists at this location", "red");
+          return res.status(200).send(fileInfo);
         }
-        fileInfo = mutationResult.data && mutationResult.data.createFile;
-        return res.status(200).send(fileInfo);
       }
     } catch (err) {
       console.log("Upload error");

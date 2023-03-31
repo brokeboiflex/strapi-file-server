@@ -10,6 +10,7 @@ export const getFileByHash = gql`
       size
       last_modified
       url
+      folder
       related
     }
   }
@@ -25,14 +26,8 @@ export const createFile = gql`
       size
       last_modified
       url
+      folder
       related
     }
   }
 `;
-
-export const moveFile = (id: String, newPath: String) =>
-  `{moveFile(id: ${id}, newPath: ${newPath}){
-    
-
-
-  }}`;
