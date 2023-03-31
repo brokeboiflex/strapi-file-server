@@ -6,7 +6,7 @@ import checkDiskSpace from "check-disk-space";
 import extensions from "./file-extensions";
 import hashes from "./hashes";
 import { createFile, getFileByHash, moveFile } from "./api";
-
+import log from "./log";
 const tempFolder = path.join(__dirname, "../temp");
 
 export default function initFunctions(publicFolder: string) {
@@ -81,47 +81,39 @@ export default function initFunctions(publicFolder: string) {
           .query(getFileByHash, { hash })
           .toPromise();
         let fileInfo = queryResult.data && queryResult.data.fileByHash;
-        // console.log("queryResult");
-        // console.log(queryResult.data);
-
         if (fileInfo && fileInfo.id) {
-          console.log("File already exists");
+          log("File already uploaded", "blue");
           fs.unlinkSync(tempPath);
-          return res.status(200).send(fileInfo);
         } else {
-          console.log("Creating file");
+          log("Saving file", "blue");
           fs.renameSync(tempPath, constPath);
-
-          const folder = req.body.folder;
-          const stats = fs.statSync(constPath);
-          const fileSizeInBytes = stats.size;
-          const extension = path.extname(constPath);
-          const category = extensionToCategotry(extension.substring(1));
-
-          const fileData = {
-            name: fileName,
-            hash: hash,
-            category: category,
-            size: fileSizeInBytes,
-            last_modified: new Date().toISOString(),
-            folder: folder,
-            url: `/files/${fileName}`,
-            typename: "File",
-          };
-          const mutationResult = await client
-            .mutation(createFile, { data: fileData })
-            .toPromise();
-          const error = mutationResult.error && mutationResult.error.message;
-          if (error) {
-            throw new Error(error);
-          }
-
-          fileInfo = mutationResult.data && mutationResult.data.createFile;
-          // console.log("fileInfo");
-          // console.log(fileInfo);
-
-          return res.status(200).send(fileInfo);
         }
+
+        const folder = req.body.folder;
+        const stats = fs.statSync(constPath);
+        const fileSizeInBytes = stats.size;
+        const extension = path.extname(constPath);
+        const category = extensionToCategotry(extension.substring(1));
+
+        const fileData = {
+          name: fileName,
+          hash: hash,
+          category: category,
+          size: fileSizeInBytes,
+          last_modified: new Date().toISOString(),
+          folder: folder,
+          url: `/files/${fileName}`,
+          typename: "File",
+        };
+        const mutationResult = await client
+          .mutation(createFile, { data: fileData })
+          .toPromise();
+        const error = mutationResult.error && mutationResult.error.message;
+        if (error) {
+          throw new Error(error);
+        }
+        fileInfo = mutationResult.data && mutationResult.data.createFile;
+        return res.status(200).send(fileInfo);
       }
     } catch (err) {
       console.log("Upload error");
