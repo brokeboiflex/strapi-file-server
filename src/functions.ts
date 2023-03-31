@@ -133,7 +133,7 @@ export default function initFunctions(publicFolder: string) {
         }
       }
     } catch (err) {
-      console.log("Upload error");
+      log("Upload error", "red");
       throw new Error(err);
     }
   };
@@ -141,7 +141,7 @@ export default function initFunctions(publicFolder: string) {
   const deleteFile = async (req, res) => {
     try {
       const pathToFile = resolveFilePath(req);
-      console.log(pathToFile);
+      log(pathToFile, "magenta");
       fs.unlinkSync(pathToFile);
       return res.status(200).send("ok");
     } catch (err) {
@@ -152,13 +152,6 @@ export default function initFunctions(publicFolder: string) {
   const getDiskUsage = async (req, res) => {
     checkDiskSpace("/").then((diskSpace) => {
       res.status(200).send(diskSpace);
-      console.log(diskSpace);
-      // {
-      //     diskPath: '/',
-      //     free: 12345678,
-      //     size: 98756432
-      // }
-      // Note: `free` and `size` are in bytes
     });
   };
 
