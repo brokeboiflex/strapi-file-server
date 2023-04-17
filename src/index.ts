@@ -15,16 +15,16 @@ const publicFolder = path.join(__dirname, "../public");
 // TODO cors
 const allowedOrigins = [process.env.CLIENT, process.env.DB_SERVER];
 const corsOptions = {
-  // origin: function (origin, callback) {
-  //   console.log("Request origin:", origin);
-  //   if (allowedOrigins.indexOf(origin) !== -1) {
-  //     // Allow access to the specified origin
-  //     callback(null, true);
-  //   } else {
-  //     // Send a 403 Forbidden response
-  //     callback(new Error("Forbidden"));
-  //   }
-  // },
+  origin: function (origin, callback) {
+    console.log("Request origin:", origin);
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      // Allow access to the specified origin
+      callback(null, true);
+    } else {
+      // Send a 403 Forbidden response
+      callback(new Error("Forbidden"));
+    }
+  },
 };
 
 const { uploadFile, deleteFile, getFile, getAllFiles, getDiskUsage } =
