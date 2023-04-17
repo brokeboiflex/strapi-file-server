@@ -31,7 +31,7 @@ const { uploadFile, deleteFile, getFile, getAllFiles, getDiskUsage } =
   initFunctions(publicFolder);
 
 // app.disable("x-powered-by");
-app.use(cors(corsOptions), fileUpload());
+app.use(cors(), fileUpload());
 
 app.use(function (err, req, res, next) {
   if (err.message === "Forbidden") {
