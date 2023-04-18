@@ -7,12 +7,25 @@ export const getFileByHash = gql`
       name
       extension
       hash
-      category
       size
+      category
       last_modified
-      url
-      folder
-      related
+      path
+    }
+  }
+`;
+
+export const getFileByName = gql`
+  query GetFileByName($name: String) {
+    fileByName(name: $name) {
+      id
+      name
+      extension
+      hash
+      size
+      category
+      last_modified
+      path
     }
   }
 `;
@@ -24,12 +37,10 @@ export const createFile = gql`
       name
       extension
       hash
-      category
       size
+      category
       last_modified
-      url
-      folder
-      related
+      path
     }
   }
 `;

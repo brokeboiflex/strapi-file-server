@@ -1,4 +1,4 @@
 node_modules
-public
-temp
+public/*
+temp/*
 hashtable.txt

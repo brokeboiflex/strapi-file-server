@@ -5,14 +5,41 @@ import checkDiskSpace from "check-disk-space";
 
 import extensions from "./file-extensions";
 import hashes from "./hashes";
-import { createFile, getFileByHash } from "./api";
+import { createFile, getFileByHash, getFileByName } from "./api";
 import log from "./log";
 
 const tempFolder = path.join(__dirname, "../temp");
 
 export default function initFunctions(publicFolder: string) {
-  const resolveFilePath = (req) =>
-    path.join(publicFolder, decodeURI(req.url.substring(7, req.url.length)));
+  const getFileInfo = async (req: any, query: any, variables: object) => {
+    const authHeader = await req.headers.authorization;
+    const client = createClient({
+      url: process.env.DB_SERVER,
+      // exchanges: [dedupExchange, cacheExchange, fetchExchange],
+      fetchOptions: () => {
+        return {
+          headers: authHeader ? { authorization: authHeader } : {},
+        };
+      },
+    });
+
+    const queryResult = await client.query(query, variables).toPromise();
+    // log(queryResult.data, "magenta");
+    let fileInfo: any =
+      (await queryResult.data) && (await Object.values(queryResult.data)[0]);
+    return fileInfo;
+  };
+
+  const resolveFilePath = async (req) => {
+    const fileName = decodeURI(req.url.substring(7, req.url.length));
+    const fileInfo = await getFileInfo(req, getFileByName, { name: fileName });
+    if (fileInfo) {
+      // log(fileInfo, "brightCyan");
+      const { hash, extension } = fileInfo;
+      const filePath = hash + extension;
+      return path.join(publicFolder, filePath);
+    } else return publicFolder;
+  };
 
   const extensionToCategotry = (extension: string) => {
     const category = Object.keys(extensions).find((key) =>
@@ -38,7 +65,7 @@ export default function initFunctions(publicFolder: string) {
 
   const getFile = async (req, res) => {
     try {
-      const pathToFile = resolveFilePath(req);
+      const pathToFile = await resolveFilePath(req);
       res.status(200).sendFile(pathToFile);
     } catch (err) {
       throw new Error(err);
@@ -82,11 +109,8 @@ export default function initFunctions(publicFolder: string) {
         const hash = hashes.getFileHash(tempPath);
         // filename is its hash + extension to avoid storing duplicate files with different names
         const constPath = path.join(publicFolder, hash + extension);
-        const queryResult = await client
-          .query(getFileByHash, { hash })
-          .toPromise();
-        let fileInfo =
-          (await queryResult.data) && (await queryResult.data.fileByHash);
+        let fileInfo = await getFileInfo(req, getFileByHash, { hash });
+
         if (fileInfo && fileInfo.id) {
           log("File already uploaded", "blue");
           fs.unlinkSync(tempPath);
@@ -114,11 +138,11 @@ export default function initFunctions(publicFolder: string) {
             name: fileName,
             extension: extension,
             hash: hash,
-            category: category,
             size: fileSizeInBytes,
+            category: category,
             last_modified: new Date().toISOString(),
-            folder: folder,
-            url: url,
+            path: folder,
+            //
             typename: "File",
           };
           const mutationResult = await client
@@ -143,7 +167,7 @@ export default function initFunctions(publicFolder: string) {
 
   const deleteFile = async (req, res) => {
     try {
-      const pathToFile = resolveFilePath(req);
+      const pathToFile = await resolveFilePath(req);
       log(pathToFile, "magenta");
       fs.unlinkSync(pathToFile);
       return res.status(200).send("ok");
