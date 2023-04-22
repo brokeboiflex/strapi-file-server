@@ -8,6 +8,8 @@ import hashes from "./hashes";
 import { createFile, getFileByHash, getFileByName } from "./api";
 import log from "./log";
 
+// import { fileTypeFromFile } from "file-type";
+
 const tempFolder = path.join(__dirname, "../temp");
 
 export default function initFunctions(publicFolder: string) {
@@ -24,7 +26,6 @@ export default function initFunctions(publicFolder: string) {
     });
 
     const queryResult = await client.query(query, variables).toPromise();
-    // log(queryResult.data, "magenta");
     let fileInfo: any =
       (await queryResult.data) && (await Object.values(queryResult.data)[0]);
     return fileInfo;
@@ -34,7 +35,6 @@ export default function initFunctions(publicFolder: string) {
     const fileName = decodeURI(req.url.substring(7, req.url.length));
     const fileInfo = await getFileInfo(req, getFileByName, { name: fileName });
     if (fileInfo) {
-      // log(fileInfo, "brightCyan");
       const { hash, extension } = fileInfo;
       const filePath = hash + extension;
       return path.join(publicFolder, filePath);
@@ -43,7 +43,7 @@ export default function initFunctions(publicFolder: string) {
 
   const extensionToCategotry = (extension: string) => {
     const category = Object.keys(extensions).find((key) =>
-      extensions[key].includes(extension)
+      extensions[key].includes(extension.substring(1))
     );
     return category ? category : "other";
   };
@@ -102,10 +102,16 @@ export default function initFunctions(publicFolder: string) {
 
         const fileName = decodeURI(req.files.file.name);
         const folder = req.body.folder;
-
         const tempPath = path.join(tempFolder, fileName);
         await req.files.file.mv(tempPath);
-        const extension = path.extname(tempPath);
+        let extension = "";
+        const extensionFromName = path.extname(tempPath);
+        if (extensionFromName) {
+          extension = extensionFromName;
+        } else {
+          const { fileTypeFromFile } = await import("file-type");
+          extension = `.${(await fileTypeFromFile(tempPath)).ext}`;
+        }
         const hash = hashes.getFileHash(tempPath);
         // filename is its hash + extension to avoid storing duplicate files with different names
         const constPath = path.join(publicFolder, hash + extension);
@@ -127,12 +133,7 @@ export default function initFunctions(publicFolder: string) {
           const category =
             fileInfo && fileInfo.category
               ? fileInfo.category
-              : extensionToCategotry(extension.substring(1));
-
-          const url =
-            fileInfo && fileInfo.url
-              ? fileInfo.url
-              : `/files/${hash + extension}`;
+              : extensionToCategotry(extension);
 
           const fileData = {
             name: fileName,
