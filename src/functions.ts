@@ -33,7 +33,7 @@ export default function initFunctions(publicFolder: string) {
 
   const resolveFilePath = async (req) => {
     const fileId = decodeURI(req.url).substring(7, req.url.length);
-    log(fileId, "magenta");
+    // log(fileId, "magenta");
     const fileInfo = await getFileInfo(req, getFileById, { id: fileId });
     log(fileInfo, "magenta");
     if (fileInfo) {
