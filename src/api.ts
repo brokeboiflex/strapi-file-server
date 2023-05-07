@@ -1,5 +1,20 @@
 import { gql } from "@urql/core";
 
+export const getFileById = gql`
+  query GetFile($id: String) {
+    file(id: $id) {
+      id
+      name
+      extension
+      hash
+      size
+      category
+      last_modified
+      path
+    }
+  }
+`;
+
 export const getFileByHash = gql`
   query GetFileByHash($hash: String) {
     fileByHash(hash: $hash) {

@@ -5,7 +5,7 @@ import checkDiskSpace from "check-disk-space";
 
 import extensions from "./file-extensions";
 import hashes from "./hashes";
-import { createFile, getFileByHash, getFileByName } from "./api";
+import { createFile, getFileByHash, getFileById } from "./api";
 import log from "./log";
 
 // import { fileTypeFromFile } from "file-type";
@@ -32,8 +32,10 @@ export default function initFunctions(publicFolder: string) {
   };
 
   const resolveFilePath = async (req) => {
-    const fileName = decodeURI(req.url).substring(7, req.url.length);
-    const fileInfo = await getFileInfo(req, getFileByName, { name: fileName });
+    const fileId = decodeURI(req.url).substring(7, req.url.length);
+    log(fileId, "magenta");
+    const fileInfo = await getFileInfo(req, getFileById, { id: fileId });
+    log(fileInfo, "magenta");
     if (fileInfo) {
       const { hash, extension } = fileInfo;
       const filePath = hash + extension;
