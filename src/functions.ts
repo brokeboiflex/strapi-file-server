@@ -37,10 +37,10 @@ export default function initFunctions(publicFolder: string) {
     const fileInfo = await getFileInfo(req, getFileById, { id: fileId });
     // log(fileInfo, "magenta");
     if (fileInfo) {
-      const { hash, extension } = fileInfo;
+      const { hash, extension, name } = fileInfo;
       const filePath = hash + extension;
-      return path.join(publicFolder, filePath);
-    } else return publicFolder;
+      return { filePath: path.join(publicFolder, filePath), fileName: name };
+    } else return { filePath: publicFolder };
   };
 
   const extensionToCategotry = (extension: string) => {
@@ -67,8 +67,10 @@ export default function initFunctions(publicFolder: string) {
 
   const getFile = async (req, res) => {
     try {
-      const pathToFile = await resolveFilePath(req);
-      res.status(200).sendFile(pathToFile);
+      const { filePath, fileName } = await resolveFilePath(req);
+
+      res.setHeader("Content-Disposition", `inline; filename="${fileName}"`);
+      res.status(200).sendFile(filePath);
     } catch (err) {
       throw new Error(err);
     }
