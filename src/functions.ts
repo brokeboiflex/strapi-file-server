@@ -7,6 +7,7 @@ import extensions from "./file-extensions";
 import hashes from "./hashes";
 import { createFile, getFileByHash, getFileById } from "./api";
 import log from "./log";
+import _ from "lodash";
 
 // import { fileTypeFromFile } from "file-type";
 
@@ -130,7 +131,7 @@ export default function initFunctions(publicFolder: string) {
         }
         if (!fileInfo || folder !== fileInfo.folder) {
           const fileSizeInBytes =
-            fileInfo && typeof fileInfo.size === "number"
+            fileInfo && _.isNumber(fileInfo.size)
               ? fileInfo.size
               : fs.statSync(constPath).size;
 
@@ -211,7 +212,7 @@ export default function initFunctions(publicFolder: string) {
       }
       if (!fileInfo || folder !== fileInfo.folder) {
         const fileSizeInBytes =
-          fileInfo && typeof fileInfo.size === "number"
+          fileInfo && _.isNumber(fileInfo.size)
             ? fileInfo.size
             : fs.statSync(constPath).size;
 
