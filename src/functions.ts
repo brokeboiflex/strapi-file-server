@@ -5,7 +5,7 @@ import checkDiskSpace from "check-disk-space";
 
 import extensions from "./file-extensions";
 import hashes from "./hashes";
-import { createFile, getFileByHash, getFileById } from "./api";
+import gqlApi from "./api";
 import log from "./log";
 import _ from "lodash";
 
@@ -13,7 +13,12 @@ import _ from "lodash";
 
 const tempFolder = path.join(__dirname, "../temp");
 
-export default function initFunctions(publicFolder: string) {
+export default function initFunctions(
+  publicFolder: string,
+  apiType: "REST" | "GQL"
+) {
+  const { createFile, getFileByHash, getFileById } = gqlApi;
+
   const getFileInfo = async (req: any, query: any, variables: object) => {
     const authHeader = await req.headers.authorization;
     const client = createClient({

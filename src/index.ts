@@ -28,7 +28,7 @@ const corsOptions = {
 };
 
 const { uploadFile, deleteFile, getFile, getAllFiles, getDiskUsage } =
-  initFunctions(publicFolder);
+  initFunctions(publicFolder, "REST");
 
 // app.disable("x-powered-by");
 app.use(cors(), fileUpload());

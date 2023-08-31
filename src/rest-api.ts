@@ -59,10 +59,3 @@ export const createFile = gql`
     }
   }
 `;
-
-export default {
-  getFileById,
-  getFileByHash,
-  getFileByName,
-  createFile,
-};
