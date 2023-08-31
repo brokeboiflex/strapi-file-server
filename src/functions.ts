@@ -264,7 +264,7 @@ export default function initFunctions(publicFolder: string) {
   };
 
   const getDiskUsage = async (req, res) => {
-    checkDiskSpace("/").then((diskSpace) => {
+    checkDiskSpace(__dirname).then((diskSpace) => {
       res.status(200).send(diskSpace);
     });
   };
