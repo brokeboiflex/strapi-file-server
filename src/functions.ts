@@ -3,7 +3,6 @@ import path from "path";
 import { createClient } from "@urql/core";
 import checkDiskSpace from "check-disk-space";
 
-import extensions from "./file-extensions";
 import hashes from "./hashes";
 import gqlApi from "./api";
 import log from "./log";
@@ -32,12 +31,21 @@ export default function initFunctions(
     });
 
     const queryResult = await client.query(query, variables).toPromise();
+    const error = queryResult.error && queryResult.error.message;
+    if (error) {
+      throw new Error(error);
+    }
     let fileInfo: any =
-      (await queryResult.data) && (await Object.values(queryResult.data)[0]);
+      (await queryResult.data) &&
+      (await Object.values(queryResult.data)[0]["data"]);
+
+    fileInfo = { id: fileInfo.id, ...fileInfo.attributes };
     return fileInfo;
   };
 
   const resolveFilePath = async (req) => {
+    console.log(decodeURI(req.url));
+
     const fileId = decodeURI(req.url).substring(7, req.url.length);
     // log(fileId, "magenta");
     const fileInfo = await getFileInfo(req, getFileById, { id: fileId });
@@ -50,10 +58,11 @@ export default function initFunctions(
   };
 
   const extensionToCategotry = (extension: string) => {
-    const category = Object.keys(extensions).find((key) =>
-      extensions[key].includes(extension.substring(1))
-    );
-    return category ? category : "other";
+    // const category = Object.keys(extensions).find((key) =>
+    //   extensions[key].includes(extension.substring(1))
+    // );
+    // return category ? category : "other";
+    return "other";
   };
 
   const returnAllFiles = (dirPath: string, arrayOfFiles?: string[]) => {
@@ -153,8 +162,7 @@ export default function initFunctions(
             category: category,
             last_modified: new Date().toISOString(),
             path: folder,
-            //
-            typename: "File",
+            publishedAt: new Date().toISOString(),
           };
           const mutationResult = await client
             .mutation(createFile, { data: fileData })
@@ -163,7 +171,6 @@ export default function initFunctions(
           if (error) {
             throw new Error(error);
           }
-          fileInfo = mutationResult.data && mutationResult.data.createFile;
           return res.status(201).send(fileInfo);
         } else {
           log("File already exists at this location", "red");
@@ -234,8 +241,7 @@ export default function initFunctions(
           category: category,
           last_modified: new Date().toISOString(),
           path: folder,
-          //
-          typename: "File",
+          publishedAt: new Date().toISOString(),
         };
         const mutationResult = await client
           .mutation(createFile, { data: fileData })
@@ -244,7 +250,8 @@ export default function initFunctions(
         if (error) {
           throw new Error(error);
         }
-        fileInfo = mutationResult.data && mutationResult.data.createFile;
+        console.log(mutationResult);
+
         return res.status(201).send(fileInfo);
       } else {
         log("File already exists at this location", "red");
