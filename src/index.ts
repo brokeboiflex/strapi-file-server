@@ -11,7 +11,7 @@ const port = 6661;
 
 // Paths
 const publicFolder = path.join(__dirname, "../public");
-
+const tempFolder = path.join(__dirname, "../temp");
 // TODO cors
 const allowedOrigins = [process.env.CLIENT, process.env.DB_SERVER];
 const corsOptions = {
@@ -28,7 +28,7 @@ const corsOptions = {
 };
 
 const { uploadFile, deleteFile, getFile, getAllFiles, getDiskUsage } =
-  initFunctions(publicFolder, "REST");
+  initFunctions(publicFolder, tempFolder, "REST");
 
 // app.disable("x-powered-by");
 app.use(cors(), fileUpload());
