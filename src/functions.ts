@@ -177,6 +177,10 @@ export default function initFunctions(
           if (error) {
             throw new Error(error);
           }
+          fileInfo.url =
+            process.env.MASK +
+            "files/" +
+            mutationResult.data.createFsFile.data.id;
           return res.status(201).send(fileInfo);
         } else {
           log("File already exists at this location", "red");
